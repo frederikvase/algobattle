@@ -2,7 +2,8 @@
 #include "../agent.h"
 #include "passo.h"
 
-class RandomAgent : public Agent {
+class RandomAgent : public Agent<Passo> {
 public:
-    void calculateMove(GameState *gamestate, std::chrono::seconds remainingTime) override;
+    RandomAgent();
+    Passo::Move calculateMove(const Passo &game) override;
 };

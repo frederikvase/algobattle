@@ -1,10 +1,23 @@
 #pragma once
-#include "game.h"
-#include <chrono>
+#include <string>
 
+template<class Game> 
 class Agent {
 public:
-    Agent();
-    virtual void calculateMove(GameState *gamestate, 
-                               std::chrono::seconds remainingTime);
+    Agent(std::string name);
+
+    virtual typename Game::Move calculateMove(const Game &game);
+    std::string getName();
+
+private:
+    std::string mName;
 };
+
+template<class Game>
+Agent<Game>::Agent(std::string name)
+    : mName(name) {}
+
+template<class Game>
+typename Game::Move Agent<Game>::calculateMove(const Game &game) {
+    return {}; // Override
+}

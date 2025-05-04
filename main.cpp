@@ -6,10 +6,16 @@ g++ *.cpp passo/*.cpp -o main -lsfml-graphics -lsfml-window -lsfml-system && ./m
 #include "app.h"
 #include "passo/passo.h"
 
-int main() {
-    Passo game;
+#include "passo/randomagent.h"
 
-    App app(game);
+#include <vector>
+
+int main() {
+    std::vector<Agent<Passo>> agents = {
+        RandomAgent()
+    };
+
+    App<Passo> app(agents);
     app.run();
 
     return 0;

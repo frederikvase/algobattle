@@ -1,22 +1,20 @@
 #pragma once
-#include "../game.h"
+#include <SFML/Graphics.hpp>
 #include <array>
 #include <set>
 
-class PassoState : public GameState {
-public:
-    std::array<uint8_t, 25> tiles;
-    bool turn;
-};
-
-class Passo : public Game {
+class Passo {
 public:
     Passo();
 
-    void draw(sf::RenderWindow &window) override;
-    void handleInput(sf::Vector2f mousePos) override;
-    
-    GameState* getGameState() override;
+    void draw(sf::RenderWindow &window);
+    void handleInput(sf::Vector2f mousePos);
+
+public:
+    struct Move {
+        int startTile;
+        int endTile;
+    };
 
 private:
     bool updateBoard();
@@ -31,4 +29,16 @@ private:
 
     int mSelectedTile;
     std::set<int> mLegalMoves;
+
+    // There functions are required
+public:
+    sf::Vector2f getScreenSize() const;
+    std::string getTitle() const;
+    bool getPlayerTurn() const;
+
+private:
+    sf::Vector2f mScreenSize;
+    std::string mTitle;
+
+    bool mPlayerTurn;
 };

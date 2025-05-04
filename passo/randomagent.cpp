@@ -1,9 +1,9 @@
 #include "randomagent.h"
 
-void RandomAgent::calculateMove(GameState* _state, std::chrono::seconds remainingTime) {
-    PassoState* state = dynamic_cast<PassoState*>(_state);
-    if (!state) return;
+RandomAgent::RandomAgent() 
+    : Agent<Passo>("Random-Agent")
+{ }
 
-    delete state;
-    delete _state;
+Passo::Move RandomAgent::calculateMove(const Passo &game) {
+    return Passo::Move();
 }

@@ -6,7 +6,9 @@ const float top = 120;
 const float spacing = -10;
 
 Passo::Passo()
-    : Game(sf::Vector2f(2200.f, 2200.f), "Passo")
+    : mScreenSize(sf::Vector2f(2200.f, 2200.f))
+    , mTitle("Passo")
+    , mPlayerTurn(0)
     , mTiles()
     , mSprites()
     , mTileSpritesheet()
@@ -172,10 +174,14 @@ void Passo::handleInput(sf::Vector2f mousePos) {
     }
 }
 
-GameState* Passo::getGameState() {
-    PassoState* state = new PassoState();
-    state->tiles = mTiles;
-    state->turn = mPlayerTurn;
+sf::Vector2f Passo::getScreenSize() const {
+    return mScreenSize;
+}
 
-    return state;
+std::string Passo::getTitle() const {
+    return mTitle;
+}
+
+bool Passo::getPlayerTurn() const {
+    return mPlayerTurn;
 }
