@@ -9,6 +9,7 @@ public:
 
     void draw(sf::RenderWindow &window);
     void handleInput(sf::Vector2f mousePos);
+    void reset();
 
 public:
     struct Move {

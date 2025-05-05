@@ -1,34 +1,47 @@
 #include "passo.h"
 #include <iostream>
 
-const float left = 120;
-const float top = 120;
+const float tileSize = 165.f;
 const float spacing = -10;
+const float left = (1000.f - 5 * tileSize - 4 * spacing) / 2.f;
+const float top = (1000.f - 5 * tileSize - 4 * spacing) / 2.f;
 
 Passo::Passo()
-    : mScreenSize(sf::Vector2f(2200.f, 2200.f))
+    : mScreenSize(sf::Vector2f(1000.f, 1000.f))
     , mTitle("Passo")
     , mPlayerTurn(0)
     , mTiles()
     , mSprites()
     , mTileSpritesheet()
-    , mSelectedTile(-1)
+    , mSelectedTile()
     , mLegalMoves()
 {
     mTileSpritesheet.loadFromFile("passo/textures/tiles.png");
     mTileSpritesheet.setSmooth(true);
+
+    reset();
+}
+
+void Passo::reset() {
+    deselect();
+    mLegalMoves.clear();
+    mPlayerTurn = 0;
 
     // Setup starting position
     for (int i = 0; i < 5; i++) {
         mTiles[i] = 3;
         mTiles[i+20] = 2;
     }
+    for (int i = 5; i < 20; i++) {
+        mTiles[i] = 0;
+    }
 
     for (int i = 0; i < 5; i++) {
         for (int j = 0; j < 5; j++) {
             mSprites[i*5+j] = sf::Sprite(mTileSpritesheet, 
                               sf::IntRect(400 * mTiles[i*5+j], 0, 400, 400));
-            mSprites[i*5+j].setPosition(left+(400+spacing)*j, top+(400+spacing)*i);
+            mSprites[i*5+j].setScale(sf::Vector2f(tileSize / 400.f, tileSize / 400.f));
+            mSprites[i*5+j].setPosition(left+(tileSize+spacing)*j, top+(tileSize+spacing)*i);
         }
     }
 }
@@ -42,7 +55,7 @@ void Passo::draw(sf::RenderWindow &window) {
     }
 
     for (auto tile : mLegalMoves) {
-        int radius = 80;
+        float radius = tileSize * 0.2f;
 
         sf::CircleShape dot(radius);
         dot.setFillColor(sf::Color(0, 0, 0, 90));
@@ -51,7 +64,7 @@ void Passo::draw(sf::RenderWindow &window) {
         int x = tile % 5;
         int y = tile / 5;
 
-        dot.setPosition(left + x * (400+spacing) + 200, top + (400+spacing) * y + 200);
+        dot.setPosition(left + x * (tileSize+spacing) + tileSize/2.f, top + (tileSize+spacing) * y + tileSize/2.f);
         window.draw(dot);
     }
 }
@@ -127,14 +140,14 @@ void Passo::deselect() {
 
 void Passo::handleInput(sf::Vector2f mousePos) {
     mousePos -= sf::Vector2f(left, top);
-    if (mousePos.x < 0.f || mousePos.x > (400.f + spacing) * 5.f ||
-        mousePos.y < 0.f || mousePos.y > (400.f + spacing) * 5.f) {
+    if (mousePos.x < 0.f || mousePos.x > (tileSize + spacing) * 5.f ||
+        mousePos.y < 0.f || mousePos.y > (tileSize + spacing) * 5.f) {
         deselect();
         return;
     }
 
-    int x = mousePos.x / (400.f + spacing);
-    int y = mousePos.y / (400.f + spacing);
+    int x = mousePos.x / (tileSize + spacing);
+    int y = mousePos.y / (tileSize + spacing);
 
     int tile = y*5+x;
     if (mLegalMoves.count(tile)) {

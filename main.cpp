@@ -12,7 +12,8 @@ g++ *.cpp passo/*.cpp -o main -lsfml-graphics -lsfml-window -lsfml-system && ./m
 
 int main() {
     std::vector<Agent<Passo>> agents = {
-        RandomAgent()
+        RandomAgent(),
+        RandomAgent(),
     };
 
     App<Passo> app(agents);

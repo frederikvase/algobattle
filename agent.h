@@ -21,3 +21,8 @@ template<class Game>
 typename Game::Move Agent<Game>::calculateMove(const Game &game) {
     return {}; // Override
 }
+
+template<class Game>
+std::string Agent<Game>::getName() {
+    return mName;
+}
