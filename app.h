@@ -2,6 +2,9 @@
 #include "ui.h"
 #include "agent.h"
 
+#include <iostream>
+#include <string.h>
+
 #include <unistd.h>
 #include <csignal>
 #include <sys/wait.h>
@@ -119,8 +122,24 @@ void App<Game, Board>::update() {
         ssize_t bytes = read(mPipefd[0], &move, sizeof(move));
         if (bytes == sizeof(move)) {
             close(mPipefd[0]);
-            waitpid(mChild_pid, nullptr, 0);
+
+            int status;
+            waitpid(mChild_pid, &status, 0);
             mChild_pid = -1;
+
+            if (WIFEXITED(status)) {
+                int code = WEXITSTATUS(status);
+                std::cerr << "'" << mAgents[mPlayerIndex[turn]]->getName();
+                std::cerr << "' exited with code: " << code << std::endl;
+
+                exit(0);
+            } else if (WIFSIGNALED(status)) {
+                int signal = WTERMSIG(status);
+                std::cerr << "'" << mAgents[mPlayerIndex[turn]]->getName();
+                std::cerr << "' terminated by signal: " << strsignal(signal) << std::endl;
+
+                exit(0);
+            }
 
             if (!mGame.makeMove(move)) {
                 exit(0);

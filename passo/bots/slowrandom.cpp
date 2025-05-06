@@ -14,4 +14,7 @@ Passo::Move SlowRandom::calculateMove(const Passo &game) { // Passo class has so
     sleep(1);
 
     return legalMoves[mt() % legalMoves.size()];
+
+    // Simulate segmentation fault
+    //return legalMoves[-1];
 }
