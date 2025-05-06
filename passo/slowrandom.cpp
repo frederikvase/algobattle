@@ -1,13 +1,14 @@
-#include "randomagent.h"
+#include "slowrandom.h"
 #include <vector>
 #include <random>
-#include <sys/wait.h>
 
-RandomAgent::RandomAgent() 
-    : Agent<Passo>("Random-Agent")
+#include <unistd.h>
+
+SlowRandom::SlowRandom() 
+    : Agent<Passo>("Slow-Random")
 { }
 
-Passo::Move RandomAgent::calculateMove(const Passo &game) {
+Passo::Move SlowRandom::calculateMove(const Passo &game) {
     std::random_device rd;
     std::mt19937 mt(rd());
 

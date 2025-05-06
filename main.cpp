@@ -7,13 +7,14 @@ g++ *.cpp passo/*.cpp -o main -lsfml-graphics -lsfml-window -lsfml-system && ./m
 #include "passo/passo.h"
 
 #include "passo/randomagent.h"
+#include "passo/slowrandom.h"
 
 #include <vector>
 
 int main() {
-    std::vector<Agent<Passo>> agents = {
-        RandomAgent(),
-        RandomAgent(),
+    std::vector<Agent<Passo>*> agents = {
+        new RandomAgent(),
+        new SlowRandom(),
     };
 
     App<Passo> app(agents);

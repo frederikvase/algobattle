@@ -19,7 +19,6 @@ struct Text {
         window.draw(text);
     }
 
-private:
     sf::Text text;
 };
 
@@ -58,8 +57,16 @@ public:
     bool handleInput(sf::Vector2f mousePos);
     void draw(sf::RenderWindow &window);
 
+public:
     int getPlayerOne() const;
     int getPlayerTwo() const;
+
+    sf::Font& getFont();
+
+    void setPlayerOneName(std::string name);
+    void setPlayerTwoName(std::string name);
+    void setPlayerOneTime(std::string time);
+    void setPlayerTwoTime(std::string time);
 
 public:
     static const sf::Vector2f screenSize;
@@ -74,4 +81,6 @@ private:
     int mSelectedLeft, mSelectedRight;
 
     GUI::Text mGameTitle, mPlayerOneText, mPlayerTwoText;
+    GUI::Text mPlayerOneName, mPlayerOneTime;
+    GUI::Text mPlayerTwoName, mPlayerTwoTime;
 };

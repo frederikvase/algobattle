@@ -1,5 +1,4 @@
 #include "ui.h"
-#include <iostream>
 
 const sf::Vector2f Ui::screenSize = sf::Vector2f(1920.f, 1080.f);
 const sf::Vector2f Ui::gameViewportSize = sf::Vector2f(750.f, 750.f);
@@ -12,6 +11,10 @@ Ui::Ui(std::string gameTitle)
     , mGameTitle()
     , mPlayerOneText()
     , mPlayerTwoText()
+    , mPlayerOneName()
+    , mPlayerOneTime()
+    , mPlayerTwoName()
+    , mPlayerTwoTime()
 {
     while (!mFont.loadFromFile("resources/fonts/comic-shanns.ttf")) {
         // error...
@@ -22,6 +25,15 @@ Ui::Ui(std::string gameTitle)
     mPlayerTwoText = GUI::Text(sf::Vector2f(1640.f, 70.f), mFont, "Player two", 60);
 
     mPlayButton = GUI::Button(sf::Vector2f(screenSize.x / 2.f, 1000.f), mFont, "Play/Simulate", 50);
+
+    mPlayerOneName = GUI::Text((screenSize-gameViewportSize) / 2.f + sf::Vector2f(0.f, gameViewportSize.y), mFont, "", 60);
+    mPlayerOneName.text.setFillColor(sf::Color(250, 82, 82));
+    mPlayerOneTime = GUI::Text((screenSize-gameViewportSize) / 2.f + gameViewportSize, mFont, "", 60);
+    mPlayerOneTime.text.setFillColor(sf::Color(250, 82, 82));
+    mPlayerTwoName = GUI::Text((screenSize-gameViewportSize) / 2.f, mFont, "", 60);
+    mPlayerTwoName.text.setFillColor(sf::Color(34, 139, 230));
+    mPlayerTwoTime = GUI::Text((screenSize-gameViewportSize) / 2.f + sf::Vector2f(gameViewportSize.x, 0.f), mFont, "", 60);
+    mPlayerTwoTime.text.setFillColor(sf::Color(34, 139, 230));
 }
 
 void Ui::init(std::vector<std::string> &agents) {
@@ -107,6 +119,11 @@ void Ui::draw(sf::RenderWindow &window) {
     mPlayerTwoText.draw(window);
 
     mPlayButton.draw(window);
+
+    mPlayerOneName.draw(window);
+    mPlayerOneTime.draw(window);
+    mPlayerTwoName.draw(window);
+    mPlayerTwoTime.draw(window);
 }
 
 int Ui::getPlayerOne() const {
@@ -115,4 +132,25 @@ int Ui::getPlayerOne() const {
 
 int Ui::getPlayerTwo() const {
     return mSelectedRight;
+}
+
+sf::Font& Ui::getFont() {
+    return mFont;
+}
+
+void Ui::setPlayerOneName(std::string name) {
+    mPlayerOneName.text.setString(name);
+    mPlayerOneName.text.setOrigin(-5.f, 80.f);
+}
+void Ui::setPlayerTwoName(std::string name) {
+    mPlayerTwoName.text.setString(name);
+    mPlayerTwoName.text.setOrigin(-5.f, 10.f);
+}
+void Ui::setPlayerOneTime(std::string time) {
+    mPlayerOneTime.text.setString(time);
+    mPlayerOneTime.text.setOrigin(mPlayerOneTime.text.getGlobalBounds().width+20.f, 80.f);
+}
+void Ui::setPlayerTwoTime(std::string time) {
+    mPlayerTwoTime.text.setString(time);
+    mPlayerTwoTime.text.setOrigin(mPlayerTwoTime.text.getGlobalBounds().width+20.f, 10.f);
 }

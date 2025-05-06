@@ -1,5 +1,4 @@
 #include "passo.h"
-#include <iostream>
 
 const float tileSize = 165.f;
 const float spacing = -10;
@@ -69,9 +68,7 @@ void Passo::draw(sf::RenderWindow &window) {
     }
 }
 
-// Returns true if the current player has won the game
-bool Passo::updateBoard() {
-    // Remove islands
+void Passo::updateBoard() {
     for (int y = 0; y < 5; y++) {
         for (int x = 0; x < 5; x++) {
             int tile = 5*y+x;
@@ -91,8 +88,85 @@ bool Passo::updateBoard() {
             }
         }
     }
+}
 
-    // Get back rank
+void Passo::updateTile(int tile) {
+    mSprites[tile].setTextureRect(sf::IntRect(mTiles[tile]*400, 0, 400, 400));
+}
+
+void Passo::deselect() {
+    if (mSelectedTile == -1) return;
+    mSprites[mSelectedTile].setColor(sf::Color::White);
+
+    mSelectedTile = -1;
+    mLegalMoves.clear();
+}
+
+bool Passo::handleInput(sf::Vector2f mousePos) {
+    mousePos -= sf::Vector2f(left, top);
+    if (mousePos.x < 0.f || mousePos.x > (tileSize + spacing) * 5.f ||
+        mousePos.y < 0.f || mousePos.y > (tileSize + spacing) * 5.f) {
+        deselect();
+        return false;
+    }
+
+    int x = mousePos.x / (tileSize + spacing);
+    int y = mousePos.y / (tileSize + spacing);
+
+    int tile = y*5+x;
+    if (mLegalMoves.count(tile)) {
+        makeMove({mSelectedTile, tile}, true);
+        deselect();
+        return true;
+    }
+
+    if (mSelectedTile == tile || mTiles[tile] <= 1 || (mTiles[tile] & 1) != mPlayerTurn) {
+        deselect();
+        return false;
+    }
+
+    deselect();
+    mSelectedTile = tile;
+
+    // Find legal moves
+    for (int i = std::max(0, y-1); i <= std::min(y+1, 4); i++) {
+        for (int j = std::max(0, x-1); j <= std::min(x+1, 4); j++) {
+            if (5*i+j == tile) continue;
+            int state = mTiles[5*i+j];
+            if (state != 1 && state < 8) {
+                mLegalMoves.insert(5*i+j);
+            }
+        }
+    }
+    return false;
+}
+
+bool Passo::makeMove(Passo::Move move, bool updateVisuals) {
+    if (mTiles[move.startTile] <= 1 || (mTiles[move.startTile]&1)!=mPlayerTurn ||
+        mTiles[move.endTile] == 1 || mTiles[move.endTile] >= 8) {
+        return false;
+    }
+
+    if (std::max(std::abs(move.startTile / 5 - move.endTile / 5), 
+                 std::abs(move.startTile % 5 - move.endTile % 5)) != 1) {
+        return false;
+    }
+
+    if (!mTiles[move.endTile]) mTiles[move.endTile] = 1;
+    mTiles[move.endTile] = (mTiles[move.endTile] << 1) | (mTiles[move.startTile] & 1);
+    mTiles[move.startTile] >>= 1;
+
+    if (updateVisuals) {
+        updateTile(move.startTile);
+        updateTile(move.endTile);
+        updateBoard();
+    }
+    mPlayerTurn ^= 1;
+
+    return true;
+}
+
+Passo::State Passo::getGameResult() const {
     int backRank;
     if (mPlayerTurn) {
         for (int i = 4; i >= 0; i--) {
@@ -119,72 +193,29 @@ bool Passo::updateBoard() {
     for (int i = 0; i < 5; i++) {
         int state = mTiles[backRank*5+i];
         if (state > 1 && (state & 1) == mPlayerTurn) {
-            return true;
+            return mPlayerTurn ? Passo::State::P2Win : Passo::State::P1Win;
         }
     }
 
-    return false;
-}
-
-void Passo::updateTile(int tile) {
-    mSprites[tile].setTextureRect(sf::IntRect(mTiles[tile]*400, 0, 400, 400));
-}
-
-void Passo::deselect() {
-    if (mSelectedTile == -1) return;
-    mSprites[mSelectedTile].setColor(sf::Color::White);
-
-    mSelectedTile = -1;
-    mLegalMoves.clear();
-}
-
-void Passo::handleInput(sf::Vector2f mousePos) {
-    mousePos -= sf::Vector2f(left, top);
-    if (mousePos.x < 0.f || mousePos.x > (tileSize + spacing) * 5.f ||
-        mousePos.y < 0.f || mousePos.y > (tileSize + spacing) * 5.f) {
-        deselect();
-        return;
+    if (getLegalMoves().size() == 0) {
+        return mPlayerTurn ? Passo::State::P1Win : Passo::State::P2Win;
     }
 
-    int x = mousePos.x / (tileSize + spacing);
-    int y = mousePos.y / (tileSize + spacing);
+    return Passo::State::Running;
+}
 
-    int tile = y*5+x;
-    if (mLegalMoves.count(tile)) {
-        if (!mTiles[tile]) mTiles[tile] = 1;
-
-        mTiles[tile] = (mTiles[tile] << 1) | (mTiles[mSelectedTile] & 1);
-        mTiles[mSelectedTile] >>= 1; 
-
-        updateTile(tile);
-        updateTile(mSelectedTile);
-
-        deselect();
-        mPlayerTurn ^= 1;
-        if (updateBoard()) {
-            std::cout << "Congratulations " << (mPlayerTurn ? "blue" : "red") << "! You win\n";
-        }
-        return;
-    }
-
-    if (mSelectedTile == tile || mTiles[tile] <= 1 || (mTiles[tile] & 1) != mPlayerTurn) {
-        deselect();
-        return;
-    }
-
-    deselect();
-    mSelectedTile = tile;
-
-    // Find legal moves
-    for (int i = std::max(0, y-1); i <= std::min(y+1, 4); i++) {
-        for (int j = std::max(0, x-1); j <= std::min(x+1, 4); j++) {
-            if (5*i+j == tile) continue;
-            int state = mTiles[5*i+j];
-            if (state != 1 && state < 8) {
-                mLegalMoves.insert(5*i+j);
+std::vector<Passo::Move> Passo::getLegalMoves() const {
+    std::vector<Passo::Move> ret;
+    for (int i = 0; i < 25; i++) {
+        if (mTiles[i] <= 1 || (mTiles[i]&1) != mPlayerTurn) continue;
+        for (int j = 0; j < 25; j++) {
+            if (mTiles[j] == 1 || mTiles[j] >= 8) continue;
+            if (std::max(std::abs(i / 5 - j / 5), std::abs(i % 5 - j % 5)) == 1) {
+                ret.push_back({i, j});
             }
         }
     }
+    return ret;
 }
 
 sf::Vector2f Passo::getScreenSize() const {
