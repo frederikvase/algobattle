@@ -11,7 +11,7 @@
 #include <chrono>
 using namespace std::chrono_literals;
 
-template<class Game>
+template<class Game, class Board>
 class App {
 public:
     App(std::vector<Agent<Game>*> agents, std::chrono::milliseconds agentTimeLimit);
@@ -24,6 +24,8 @@ private:
 
 private:
     Game mGame;
+    Board mBoard;
+
     Ui mUi;
 
     std::vector<Agent<Game>*> mAgents;
@@ -47,12 +49,13 @@ private:
     bool mCalculating;
 };
 
-template<class Game>
-App<Game>::App(std::vector<Agent<Game>*> agents, std::chrono::milliseconds agentTimeLimit)
-    : mGame(), mUi(mGame.getTitle())
+template<class Game, class Board>
+App<Game, Board>::App(std::vector<Agent<Game>*> agents, std::chrono::milliseconds agentTimeLimit)
+    : mGame(), mBoard()
+    , mUi(mBoard.getTitle())
     , mAgents(agents)
     , mWindow(sf::VideoMode(Ui::screenSize.x, Ui::screenSize.y), "AlgoBattle", sf::Style::Fullscreen)
-    , mGameView(sf::FloatRect({0.f, 0.f}, mGame.getScreenSize()))
+    , mGameView(sf::FloatRect({0.f, 0.f}, mBoard.getScreenSize()))
     , mUiView(sf::FloatRect({0.f, 0.f}, Ui::screenSize))
     , mPlayerIndex({int(agents.size()), int(agents.size())})
     , mTimeLimit(agentTimeLimit)
@@ -74,8 +77,8 @@ App<Game>::App(std::vector<Agent<Game>*> agents, std::chrono::milliseconds agent
     mUi.init(agentNames);
 }
 
-template<class Game>
-void App<Game>::run() {
+template<class Game, class Board>
+void App<Game, Board>::run() {
     while (mWindow.isOpen()) {
         handleEvents();
         update();
@@ -83,8 +86,8 @@ void App<Game>::run() {
     }
 }
 
-template<class Game>
-void App<Game>::update() {
+template<class Game, class Board>
+void App<Game, Board>::update() {
     const int turn = mGame.getPlayerTurn();
 
     const auto now = std::chrono::steady_clock::now();
@@ -107,7 +110,7 @@ void App<Game>::update() {
         if (mFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             typename Game::Move move = mFuture.get();
 
-            if (!mGame.makeMove(move, true)) {
+            if (!mGame.makeMove(move)) {
                 exit(0);
             }
             mGameState = mGame.getGameResult();
@@ -134,8 +137,8 @@ std::string timeToString(std::chrono::nanoseconds timeLeft) {
     return res;
 }
 
-template<class Game>
-void App<Game>::handleEvents() {
+template<class Game, class Board>
+void App<Game, Board>::handleEvents() {
     sf::Event event;
     while (mWindow.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -144,10 +147,11 @@ void App<Game>::handleEvents() {
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             if (mReleasedButton) {
                 sf::Vector2f mousePos = mWindow.mapPixelToCoords(sf::Mouse::getPosition(mWindow), mGameView);
-                if (mousePos.x >= 0.f && mousePos.x <= mGame.getScreenSize().x && 
-                    mousePos.y >= 0.f && mousePos.y <= mGame.getScreenSize().y) {
+                if (mousePos.x >= 0.f && mousePos.x <= mBoard.getScreenSize().x && 
+                    mousePos.y >= 0.f && mousePos.y <= mBoard.getScreenSize().y) {
                     if (mPlayerIndex[mGame.getPlayerTurn()] == int(mAgents.size()) && mGameState == Game::Running) {
-                        if (mGame.handleInput(mousePos)) {
+                        if (auto move = mBoard.handleInput(mousePos, mGame)) {
+                            mGame.makeMove(*move);
                             mGameState = mGame.getGameResult();
                         }
                     }
@@ -183,12 +187,12 @@ void App<Game>::handleEvents() {
     }
 }
 
-template<class Game>
-void App<Game>::draw() {
+template<class Game, class Board>
+void App<Game, Board>::draw() {
     mWindow.clear(sf::Color::Black);
 
     mWindow.setView(mGameView);
-    mGame.draw(mWindow);
+    mBoard.draw(mWindow, mGame);
 
     mWindow.setView(mUiView);
     if (mPlayerIndex[0] != int(mAgents.size())) {

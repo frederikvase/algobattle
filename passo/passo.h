@@ -1,8 +1,7 @@
 #pragma once
-#include <SFML/Graphics.hpp>
 #include <vector>
+#include <cstdint>
 #include <array>
-#include <set>
 
 class Passo {
 public: // Required struct and enum
@@ -22,38 +21,21 @@ public: // Required struct and enum
 public: // Required methods
     Passo();
 
-    void draw(sf::RenderWindow &window);
-    bool handleInput(sf::Vector2f mousePos);
     void reset();
 
-    bool makeMove(Passo::Move move, bool updateVisuals=false);
+    bool makeMove(Passo::Move move);
     Passo::State getGameResult() const;
-
-public:
-    std::vector<Passo::Move> getLegalMoves() const;
 
 private:
     void updateBoard();
 
-    void updateTile(int tile);
-    void deselect();
-
-private:
-    std::array<uint8_t, 25> mTiles;
-    std::array<sf::Sprite, 25> mSprites;
-    sf::Texture mTileSpritesheet;
-
-    int mSelectedTile;
-    std::set<int> mLegalMoves;
+public:
+    std::vector<Passo::Move> getLegalMoves() const;
+    std::array<uint8_t, 25> tiles;
 
 public: // Required methods:
-    sf::Vector2f getScreenSize() const;
-    std::string getTitle() const;
     bool getPlayerTurn() const;
 
 private: // Required attributes
-    sf::Vector2f mScreenSize;
-    std::string mTitle;
-
     bool mPlayerTurn;
 };

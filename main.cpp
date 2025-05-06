@@ -5,6 +5,7 @@ g++ *.cpp passo/*.cpp -o main -lsfml-graphics -lsfml-window -lsfml-system && ./m
 
 #include "app.h"
 #include "passo/passo.h"
+#include "passo/passoboard.h"
 
 #include "passo/randomagent.h"
 #include "passo/slowrandom.h"
@@ -17,7 +18,7 @@ int main() {
         new SlowRandom(),
     };
 
-    App<Passo> app(agents,  4500ms);
+    App<Passo, PassoBoard> app(agents,  4500ms);
     app.run();
 
     return 0;
