@@ -2,12 +2,14 @@
 #include "ui.h"
 #include "agent.h"
 
-#include <iostream>
+#include <unistd.h>
+#include <csignal>
+#include <sys/wait.h>
+#include <fcntl.h>
 
 #include <vector>
 #include <array>
 
-#include <future>
 #include <chrono>
 using namespace std::chrono_literals;
 
@@ -44,9 +46,10 @@ private:
     std::chrono::nanoseconds mP2RemainingTime;
 
     typename Game::State mGameState;
-
-    std::future<typename Game::Move> mFuture;
     bool mCalculating;
+
+    int mPipefd[2];
+    pid_t mChild_pid;
 };
 
 template<class Game, class Board>
@@ -63,9 +66,12 @@ App<Game, Board>::App(std::vector<Agent<Game>*> agents, std::chrono::millisecond
     , mP1RemainingTime()
     , mP2RemainingTime()
     , mGameState(Game::Defualt)
-    , mFuture()
     , mCalculating(false)
+    , mPipefd()
+    , mChild_pid(-1)
 {
+    mPipefd[0] = mPipefd[1] = -1;
+
     const float fracWidth = mUi.gameViewportSize.x/mUi.screenSize.x;
     const float fracHeight = mUi.gameViewportSize.y/mUi.screenSize.y;
     mGameView.setViewport(sf::FloatRect({0.5f - fracWidth / 2.f, 0.5f - fracHeight / 2.f}, 
@@ -90,33 +96,56 @@ template<class Game, class Board>
 void App<Game, Board>::update() {
     const int turn = mGame.getPlayerTurn();
 
-    const auto now = std::chrono::steady_clock::now();
-
-    if (mPlayerIndex[turn] != int(mAgents.size()) && mGameState == Game::Running) {
-        (turn ? mP2RemainingTime : mP1RemainingTime) -= now - mLastTimePoint;
-        if ((turn ? mP2RemainingTime : mP1RemainingTime) <= 0s) {
-            mGameState = turn ? Game::State::P1WinTime : Game::State::P2WinTime;
-            return;
-        }
-    }
-    mLastTimePoint = now;
-
     if (mPlayerIndex[turn] != int(mAgents.size()) && mGameState == Game::Running && !mCalculating) {
+        pipe(mPipefd); // [0] = read, [1] = write
         mCalculating = true;
-        mFuture = std::async(std::launch::async, &Agent<Game>::calculateMove, mAgents[mPlayerIndex[turn]], mGame);
+
+        mChild_pid = fork();
+        if (mChild_pid == 0) { // child process
+            close(mPipefd[0]);
+
+            auto move = mAgents[mPlayerIndex[turn]]->calculateMove(mGame);
+            write(mPipefd[1], &move, sizeof(move));
+            close(mPipefd[1]);
+            _exit(0); // Breaks if I use exit(0) for some reason
+        } else { // parent process
+            close(mPipefd[1]);
+            fcntl(mPipefd[0], F_SETFL, O_NONBLOCK);
+        }
     }
 
     if (mCalculating) {
-        if (mFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-            typename Game::Move move = mFuture.get();
+        typename Game::Move move;
+        ssize_t bytes = read(mPipefd[0], &move, sizeof(move));
+        if (bytes == sizeof(move)) {
+            close(mPipefd[0]);
+            waitpid(mChild_pid, nullptr, 0);
+            mChild_pid = -1;
 
             if (!mGame.makeMove(move)) {
                 exit(0);
             }
+
             mGameState = mGame.getGameResult();
             mCalculating = false;
         }
     }
+
+    const auto now = std::chrono::steady_clock::now();
+    if (mPlayerIndex[turn] != int(mAgents.size()) && mGameState == Game::Running) {
+        (turn ? mP2RemainingTime : mP1RemainingTime) -= now - mLastTimePoint;
+        if ((turn ? mP2RemainingTime : mP1RemainingTime) <= 0s) {
+            mGameState = turn ? Game::State::P1WinTime : Game::State::P2WinTime;
+
+            if (mChild_pid > 0) {
+                kill(mChild_pid, SIGTERM);
+                waitpid(mChild_pid, nullptr, 0);
+            }
+
+            return;
+        }
+    }
+    mLastTimePoint = now;
 }
 
 std::string timeToString(std::chrono::nanoseconds timeLeft) {
@@ -216,6 +245,7 @@ void App<Game, Board>::draw() {
         msg.text.setStyle(sf::Text::Italic);
         msg.draw(mWindow);
     };
+
     if (mGameState == Game::State::P1Win) {
         DrawGameResult("Player One won the game!", sf::Color(250, 82, 82));
     } else if (mGameState == Game::State::P2Win) {

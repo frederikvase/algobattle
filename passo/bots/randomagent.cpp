@@ -1,7 +1,5 @@
 #include "randomagent.h"
-#include <vector>
 #include <random>
-#include <sys/wait.h>
 
 RandomAgent::RandomAgent() 
     : Agent<Passo>("Random-Agent")
