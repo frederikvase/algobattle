@@ -15,6 +15,7 @@ public: // Required struct and enum
         Running,
         P1Win, P1WinTime,
         P2Win, P2WinTime,
+        Draw,
         Defualt
     };
 

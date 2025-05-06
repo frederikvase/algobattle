@@ -12,7 +12,6 @@ Passo::Move RandomAgent::calculateMove(const Passo &game) {
     std::mt19937 mt(rd());
 
     std::vector<Passo::Move> legalMoves = game.getLegalMoves();
-    sleep(1);
 
     return legalMoves[mt() % legalMoves.size()];
 }

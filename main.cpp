@@ -17,7 +17,7 @@ int main() {
         new SlowRandom(),
     };
 
-    App<Passo> app(agents);
+    App<Passo> app(agents,  4500ms);
     app.run();
 
     return 0;
